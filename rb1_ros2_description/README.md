@@ -48,7 +48,7 @@ This package only modifies/adapts files from these repositories/packages:
 
     In order to start the simulation & activate the controllers the you need to run 3 commands inside the first terminal:
         1.) cd ~/ros2_ws
-        2.) source install && source install/setup.bash
+        2.) colcon build && source install/setup.bash
     If compilation succeed execute the launch file:
         3.) ros2 launch rb1_ros2_description rb1_ros2_xacro.launch.py
 
