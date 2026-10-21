@@ -1,7 +1,7 @@
 import os
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, RegisterEventHandler, TimerAction
-from launch.event_handlers import OnProcessStart, OnProcessExit
+from launch.actions import IncludeLaunchDescription, RegisterEventHandler, TimerAction, LogInfo
+from launch.event_handlers import OnProcessStart, OnProcessExit, OnExecutionComplete
 from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -50,13 +50,12 @@ def generate_launch_description():
     robot_desc_path = os.path.join(get_package_share_directory(
         "rb1_ros2_description"), "xacro", robot_desc_file)
 
-    robot_name_1 = "rb1_robot"
+    robot_name_1 = "rb1_robot_"
 
     rsp_robot = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         name='robot_state_publisher',
-        namespace=robot_name_1,
         parameters=[{'frame_prefix': robot_name_1 + '/', 'use_sim_time': use_sim_time,
                      'robot_description': ParameterValue(Command(['xacro ', robot_desc_path, ' robot_name:=', robot_name_1]), value_type=str)}],
         output="screen"
@@ -70,7 +69,7 @@ def generate_launch_description():
         arguments=[
             "-name", robot_name_1,
             "-allow_renaming", "true",
-            "-topic", robot_name_1 + "/robot_description",
+            "-topic", "/robot_description",
             "-x", "0.0",
             "-y", "0.0",
             "-z", "0.2",
@@ -93,7 +92,57 @@ def generate_launch_description():
         output="screen",
     )
 
+    # Joint State Broadcaster Spawner
+    joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+        output='screen',
+        emulate_tty=True,
+    )
+
+    # Differential Drive Controller Spawner
+    diff_drive_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_drive_controller", "--controller-manager", "/controller_manager"],
+        output='screen',
+        emulate_tty=True,
+    )
+
+    rb1_lift_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["rb1_lift_controller", "-c", "/controller_manager"],
+    )
+
+
     return LaunchDescription([
+        RegisterEventHandler(
+            OnExecutionComplete(
+                target_action=gz_spawn_entity,
+                on_completion=[
+                    LogInfo(
+                        msg='Spawn finished, waiting 10 seconds to start controllers.'),
+                    TimerAction(
+                        period=10.0,
+                        actions=[joint_state_broadcaster_spawner],
+                    )
+                ]
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=joint_state_broadcaster_spawner,
+                on_exit=[diff_drive_spawner],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=diff_drive_spawner,
+                on_exit=[rb1_lift_controller_spawner],
+            )
+        ),
         gz_sim,
         rsp_robot,
         gz_spawn_entity,

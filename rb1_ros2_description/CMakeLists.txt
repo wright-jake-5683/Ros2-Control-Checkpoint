@@ -7,9 +7,35 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(control_msgs REQUIRED)
+find_package(controller_interface REQUIRED)
+find_package(hardware_interface REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
+find_package(realtime_tools REQUIRED)
+
+add_library(
+  rb1_lift_controller
+  SHARED
+  src/rb1_lift_controller.cpp
+)
+target_include_directories(
+  rb1_lift_controller
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(
+  rb1_lift_controller
+  control_msgs
+  controller_interface
+  hardware_interface
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
+  realtime_tools
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -22,6 +48,25 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+# prevent pluginlib from using boost
+target_compile_definitions(rb1_lift_controller PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
+
+pluginlib_export_plugin_description_file(
+  controller_interface rb1_lift_controller.xml)
+
+install(
+  TARGETS
+  rb1_lift_controller
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+)
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
 install(
   DIRECTORY
     launch
@@ -29,8 +74,25 @@ install(
 	urdf
 	xacro
 	worlds
+	config
   DESTINATION
     share/${PROJECT_NAME}/
+)
+ 
+ament_export_include_directories(
+  include
+)
+ament_export_libraries(
+  rb1_lift_controller
+)
+ament_export_dependencies(
+  control_msgs
+  controller_interface
+  hardware_interface
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
+  realtime_tools
 )
 
 ament_package()

@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<!-- Using xacro you we create a macro for one joint -->
+<xacro:macro name="rb1_joint" params="name">
+    <joint name="${name}">
+      
+      <command_interface name="position">
+        <param name="min">-10</param>
+        <param name="max">10</param>
+      </command_interface>
+      
+      <command_interface name="velocity">
+        <param name="min">-1000</param>
+        <param name="max">1000</param>
+      </command_interface>
+      
+      <command_interface name="effort">
+        <param name="min">-1000</param>
+        <param name="max">1000</param>
+      </command_interface>
+    
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </xacro:macro>
+  
+  <xacro:macro name="ros2_control" params="name prefix">
+
+    <ros2_control name="${name}" type="system">
+
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+
+      <!-- Rubber Wheels -->
+      <xacro:rb1_joint name="${prefix}right_wheel_joint"/>
+      <xacro:rb1_joint name="${prefix}left_wheel_joint"/>
+
+      <!-- Elevator -->
+      <xacro:rb1_joint name="${prefix}elevator_platform_joint"/>
+
+    </ros2_control>
+
+    <!-- Gazebo's ros2_control plugin -->
+    <gazebo>
+        <plugin filename="gz_ros2_control-system"
+                name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+            <parameters>$(find rb1_ros2_description)/config/rb1_controller.yaml</parameters>
+            <param name="position_proportional_gain">5.0</param>
+        </plugin>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>
+ 

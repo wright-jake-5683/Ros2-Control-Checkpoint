@@ -1,0 +1,9 @@
+ <library path="rb1_lift_controller">
+  <class name="rb1_lift_controller/RB1Controller"
+         type="rb1_lift_controller::RB1Controller" base_class_type="controller_interface::ControllerInterface">
+  <description>
+    RB1 lift ros2_control controller.
+  </description>
+  </class>
+</library>
+ 

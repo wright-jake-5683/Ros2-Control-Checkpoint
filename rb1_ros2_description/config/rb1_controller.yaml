@@ -1,0 +1,33 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+    rb1_lift_controller:
+      type: rb1_lift_controller/RB1Controller
+
+diff_drive_controller:
+  ros__parameters:
+    left_wheel_names: ["robot_left_wheel_joint"]
+    right_wheel_names: ["robot_right_wheel_joint"]
+    wheel_separation: 0.4
+    wheel_radius: 0.076
+    publish_rate: 50.0
+    odom_frame_id: odom
+    base_frame_id: robot_base_link
+    cmd_vel_timeout: 0.5
+    use_stamped_vel: false
+
+rb1_lift_controller:
+  ros__parameters:
+    joints:
+      - robot_elevator_platform_joint
+    interface_name: position
+    command_timeout: 0.25
+    position_min: 0.0
+    position_max: 0.034
